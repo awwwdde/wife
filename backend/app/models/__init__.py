@@ -5,6 +5,7 @@ Alembic autogenerate и создание схемы опираются на Base
 """
 
 from app.database.base import Base
+from app.models.admin import AdminUser
 from app.models.appointment import Appointment, appointment_services
 from app.models.reminder import Reminder
 from app.models.review import Review
@@ -16,6 +17,7 @@ from app.modules.settings.models import Master
 
 __all__ = [
     "Base",
+    "AdminUser",
     "Master",
     "Client",
     "Service",

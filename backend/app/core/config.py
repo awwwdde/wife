@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # доступ к api.telegram.org закрыт. Напр. "https://xxx.workers.dev".
     TELEGRAM_API_BASE: str = ""
 
+    # CRM: bootstrap-админ (создаётся/обновляется на старте, если заданы).
+    BOOTSTRAP_ADMIN_EMAIL: str = ""
+    BOOTSTRAP_ADMIN_PASSWORD: str = ""
+
     # Бизнес-правила
     CANCELLATION_HOURS: int = 6
 

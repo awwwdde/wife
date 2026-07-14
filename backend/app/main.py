@@ -18,6 +18,12 @@ from fastapi.staticfiles import StaticFiles
 
 from app.bot.webhook import router as bot_webhook_router
 from app.core.config import settings
+from app.modules.admin.appointments import router as admin_appointments_router
+from app.modules.admin.auth import router as admin_auth_router
+from app.modules.admin.clients import router as admin_clients_router
+from app.modules.admin.schedule import router as admin_schedule_router
+from app.modules.admin.services import router as admin_services_router
+from app.modules.admin.settings import router as admin_settings_router
 from app.modules.auth.router import router as auth_router
 from app.modules.booking.router import router as booking_router
 from app.modules.service.router import router as services_router
@@ -81,6 +87,14 @@ app.include_router(services_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(booking_router, prefix="/api")
 app.include_router(bot_webhook_router, prefix="/api")
+
+# CRM (админка) — все под /api/admin, защищены admin-cookie.
+app.include_router(admin_auth_router, prefix="/api")
+app.include_router(admin_services_router, prefix="/api")
+app.include_router(admin_schedule_router, prefix="/api")
+app.include_router(admin_settings_router, prefix="/api")
+app.include_router(admin_clients_router, prefix="/api")
+app.include_router(admin_appointments_router, prefix="/api")
 
 
 # --- Раздача загрузок (медиа) ---

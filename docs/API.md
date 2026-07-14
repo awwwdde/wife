@@ -32,6 +32,20 @@
 | POST | `/api/appointments/{id}/cancel` | Отмена (не позднее `CANCELLATION_HOURS` до визита, иначе 400). |
 | POST | `/api/appointments/{id}/reschedule` | `{ start_at }`. Перенос с тем же правилом и защитой от конфликта. |
 
+## CRM (админка) — всё под `/api/admin`, требует admin-cookie
+| Метод | Путь | Назначение |
+|---|---|---|
+| POST | `/api/admin/login` | `{email, password, totp_code}` → admin-cookie. Пароль (bcrypt) + 2FA (TOTP). |
+| GET / POST | `/api/admin/me` · `/api/admin/logout` | Текущий админ / выход. |
+| GET POST PATCH DELETE | `/api/admin/services[/{id}]` | CRUD услуг (DELETE — мягкое, `is_active=false`). |
+| GET / PUT | `/api/admin/schedule` | Недельный график (7 дней). |
+| GET POST DELETE | `/api/admin/timeoff[/{id}]` | Отпуска/перерывы. |
+| GET / PATCH | `/api/admin/settings` | Настройки мастера (приватный адрес, шаг слота, часы отмены). |
+| GET | `/api/admin/clients[?q=]` · `/api/admin/clients/{id}` | База клиентов; карточка с историей, визитами и суммой. |
+| GET | `/api/admin/appointments?from=&to=` | Записи за период (календарь). |
+| POST | `/api/admin/appointments` | Ручная запись (существующий клиент или новый: имя+телефон). 409 при конфликте слота. |
+| PATCH | `/api/admin/appointments/{id}/status` | Исход: `completed` / `cancelled` / `no_show` / `confirmed`. |
+
 ## Авторизация и безопасность
 - Валидация подписи Telegram обязательна: `initData` — HMAC-SHA256 (секрет на базе
   bot token и строки `WebAppData`); Login Widget — `hash` (секрет `SHA256(bot_token)`).
