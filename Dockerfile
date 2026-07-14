@@ -54,12 +54,13 @@ RUN uv pip install --system -e .
 COPY --from=frontend /fe/dist /app/static
 
 # Папка под загрузки админки (эфемерная без volume — переживает до redeploy).
-RUN mkdir -p /app/uploads
+RUN mkdir -p /app/uploads && chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
     CMD curl -fsS http://localhost:8080/healthz || exit 1
 
-# Миграции + идемпотентный сид (мастер/услуги/график), затем сервер на :8080.
-CMD ["sh", "-c", "alembic upgrade head && python -m app.scripts.seed && uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+# Устойчивый старт: ждём БД → миграции → сид → uvicorn (:8080).
+# Контейнер не падает на сбое БД/миграции — причина видна в логах, /healthz живёт.
+CMD ["sh", "/app/docker-entrypoint.sh"]
