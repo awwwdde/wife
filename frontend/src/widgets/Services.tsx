@@ -3,6 +3,9 @@ import { useServices } from "@/entities/service/api";
 // Витрина услуг — тянет из БД (backend GET /api/services).
 export function Services() {
   const { data, isLoading, isError } = useServices();
+  // Защита: если ответ не массив (например, вернулся HTML при неверном baseURL),
+  // не роняем страницу через .map — показываем пусто.
+  const services = Array.isArray(data) ? data : [];
 
   return (
     <section id="services" className="px-6 md:px-16 py-24">
@@ -16,7 +19,7 @@ export function Services() {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {data?.map((s) => (
+        {services.map((s) => (
           <article
             key={s.id}
             className="border border-graphite/15 rounded-2xl p-6 hover:border-terracotta transition-colors"

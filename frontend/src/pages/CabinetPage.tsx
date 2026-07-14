@@ -13,6 +13,7 @@ const STATUS_RU: Record<string, string> = {
 export function CabinetPage() {
   const { me, loading } = useAuth();
   const list = useMyAppointments(Boolean(me));
+  const appointments = Array.isArray(list.data) ? list.data : [];
   const cancelMut = useCancelAppointment();
 
   if (loading) return <main><p>Загрузка…</p></main>;
@@ -39,9 +40,9 @@ export function CabinetPage() {
       </p>
       <h1>Мои записи</h1>
       {list.isLoading && <p>Загрузка записей…</p>}
-      {list.data && list.data.length === 0 && <p>Записей пока нет.</p>}
+      {list.isSuccess && appointments.length === 0 && <p>Записей пока нет.</p>}
       <ul>
-        {list.data?.map((a) => (
+        {appointments.map((a) => (
           <li key={a.id}>
             {new Date(a.start_at).toLocaleString("ru-RU")} —{" "}
             {a.services.map((s) => s.title).join(", ")} [{STATUS_RU[a.status] ?? a.status}]

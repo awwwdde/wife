@@ -19,7 +19,8 @@ function fmtTime(iso: string): string {
 
 export function BookingWizard() {
   const { me, isMiniApp } = useAuth();
-  const { data: services } = useServices();
+  const { data: servicesData } = useServices();
+  const services = Array.isArray(servicesData) ? servicesData : [];
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [date, setDate] = useState<string>(todayISO());
   const [slot, setSlot] = useState<Slot | null>(null);
@@ -27,6 +28,7 @@ export function BookingWizard() {
   const [consent, setConsent] = useState(false);
 
   const slotsQuery = useSlots(date, selectedIds);
+  const slots = Array.isArray(slotsQuery.data) ? slotsQuery.data : [];
   const createMut = useCreateAppointment();
 
   const total = useMemo(() => {
@@ -106,10 +108,10 @@ export function BookingWizard() {
         />
         <div>
           {slotsQuery.isLoading && <span>Загрузка слотов…</span>}
-          {slotsQuery.data && slotsQuery.data.length === 0 && (
+          {slotsQuery.isSuccess && slots.length === 0 && (
             <span>На эту дату свободных слотов нет.</span>
           )}
-          {slotsQuery.data?.map((s) => (
+          {slots.map((s) => (
             <button
               key={s.start_at}
               type="button"
