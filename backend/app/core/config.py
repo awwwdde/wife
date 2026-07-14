@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     BOT_USERNAME: str = ""
     TELEGRAM_WEBHOOK_URL: str = ""
     TELEGRAM_WEBHOOK_SECRET: str = "change-me"
+    # Прокси для api.telegram.org, если у хостинга нет прямого исходящего доступа
+    # к Telegram (напр. "http://user:pass@host:port" или "socks5://host:port").
+    TELEGRAM_PROXY: str = ""
+    # Свой base-URL Bot API (реверс-прокси, напр. Cloudflare Worker) — когда прямой
+    # доступ к api.telegram.org закрыт. Напр. "https://xxx.workers.dev".
+    TELEGRAM_API_BASE: str = ""
 
     # Бизнес-правила
     CANCELLATION_HOURS: int = 6

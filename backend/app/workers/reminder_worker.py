@@ -32,6 +32,8 @@ async def process_due_reminders() -> int:
     if not settings.BOT_TOKEN:
         return 0  # без токена слать нечем (скелет/локалка)
 
+    from aiogram.exceptions import TelegramNetworkError
+
     from app.bot import notifications
 
     now = datetime.now(UTC)
@@ -57,6 +59,9 @@ async def process_due_reminders() -> int:
                     sent += 1
                 else:
                     reminder.status = ReminderStatus.failed
+            except TelegramNetworkError:
+                # Сеть до Telegram недоступна — НЕ теряем напоминание, повторим позже.
+                log.warning("Сеть до Telegram недоступна — #%s на повтор", reminder.id)
             except Exception:
                 log.exception("Не удалось отправить напоминание #%s", reminder.id)
                 reminder.status = ReminderStatus.failed

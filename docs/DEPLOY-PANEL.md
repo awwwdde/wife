@@ -40,6 +40,24 @@ FastAPI-бэкендом, что и `/api`. Один процесс, один п
 на `<PUBLIC_SITE_URL>/api/bot/webhook`. Проверка: напиши боту `/start` — придёт
 приветствие с кнопками «Записаться» и «Поделиться номером».
 
+⚠️ **Боту нужен исходящий доступ к `api.telegram.org`** (TCP 443, сети
+`149.154.160.0/20`, `91.108.4.0/22`). Если в логах старта
+`TelegramNetworkError: Request timeout` при `set_webhook`/`set_chat_menu_button` —
+контейнер не достаёт до Telegram (частая ситуация на RF-хостинге). Варианты (по приоритету):
+
+1. **Свой Bot API base через Cloudflare Worker** (бесплатно, без сервера) — рекомендую.
+   Разверни воркер из [`telegram-proxy-worker.js`](telegram-proxy-worker.js) и задай:
+   ```
+   TELEGRAM_API_BASE=https://<имя>.<акк>.workers.dev
+   ```
+   Бот будет ходить в Telegram через воркер. Проверка: открыть в браузере
+   `https://<воркер>/bot<TOKEN>/getMe` → `{"ok":true,...}`.
+2. **Прокси**: `TELEGRAM_PROXY=socks5://…` или `http://…` (если есть прокси до Telegram).
+3. **Открыть egress** к Telegram в панели/файрволе (если возможно).
+
+Приложение при старте не падает — сайт/запись работают, даже пока бот недоступен.
+Напоминания при недоступности Telegram не теряются — воркер повторит их позже.
+
 Уже зашиты в образ и менять не нужно: `ENV=production`, `STATIC_DIR=/app/static`,
 `UPLOADS_DIR=/app/uploads`.
 
