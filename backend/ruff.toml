@@ -1,0 +1,13 @@
+target-version = "py312"
+line-length = 100
+src = ["app"]
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "N"]
+ignore = [
+    "B008",   # FastAPI Depends() в дефолтах аргументов — норма
+    "UP042",  # (str, Enum) намеренно — совместимость с SQLAlchemy/Pydantic
+]
+
+[lint.isort]
+known-first-party = ["app"]

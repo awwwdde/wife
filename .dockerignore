@@ -1,0 +1,25 @@
+# Контекст сборки корневого Dockerfile (awwwdde-panel).
+.git
+.gitignore
+*.md
+docs/
+
+# Секреты — никогда в образ.
+.env
+*.env
+!*.env.example
+
+# Node / фронт
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Python / бэк
+backend/.venv
+**/__pycache__
+**/*.pyc
+backend/uv.lock
+
+# Прочее
+node_modules
+*.log

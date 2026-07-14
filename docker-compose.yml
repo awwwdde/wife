@@ -1,0 +1,111 @@
+# askbrows — dev-стек. Прод-оверрайды позже (docker-compose.prod.yml).
+# Фронт в dev — Vite dev-сервер с HMR; prod-образ со статикой за Nginx отдельно.
+# Бот и API — из одного образа backend, но разные сервисы/entrypoint'ы.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    # Дефолты, чтобы `docker compose up postgres` работал и без .env.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-askbrows}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-askbrows}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-askbrows} -d ${POSTGRES_DB:-askbrows}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # Внутри docker-сети БД доступна по имени сервиса (переопределяет .env).
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-askbrows}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-askbrows}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  bot:
+    build:
+      context: ./backend
+    command: python -m app.bot
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-askbrows}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-askbrows}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  # Воркер напоминаний: скан таблицы Reminder раз в минуту (не per-job).
+  worker:
+    build:
+      context: ./backend
+    command: python -m app.workers.reminder_worker
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-askbrows}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-askbrows}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: pnpm dev --host 0.0.0.0
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # В docker фронт ходит на сервис backend по имени (переопределяет .env).
+      PUBLIC_API_URL: http://backend:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
+  redis-data:

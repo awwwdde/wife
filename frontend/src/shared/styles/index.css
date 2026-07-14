@@ -1,0 +1,30 @@
+/* Self-host шрифты: положи .woff2 в src/shared/fonts/ и раскомментируй @font-face
+   в fonts.css (см. src/shared/fonts/README.md). Пока — системные фолбэки.
+   @import обязан идти раньше остальных правил. */
+@import "../fonts/fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  background: theme("colors.cream");
+  color: theme("colors.graphite");
+  font-family: theme("fontFamily.sans");
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Уважаем настройку пользователя (важно и для Mini App). */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

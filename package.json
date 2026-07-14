@@ -1,0 +1,18 @@
+{
+  "name": "askbrows",
+  "private": true,
+  "version": "0.1.0",
+  "description": "askbrows monorepo — единая dev-команда для фронта и бэка.",
+  "scripts": {
+    "dev": "concurrently -n \"DB,BACK,FRONT\" -c \"#38bdf8,green,#a855f7\" \"docker compose up postgres\" \"python -m uv run --directory backend uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\" \"pnpm --dir frontend dev\"",
+    "dev:front": "pnpm --dir frontend dev",
+    "dev:back": "python -m uv run --directory backend uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:db": "docker compose up postgres",
+    "db:init": "python -m uv run --directory backend alembic upgrade head && python -m uv run --directory backend python -m app.scripts.seed",
+    "install:all": "pnpm install && pnpm --dir frontend install && python -m uv sync --directory backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

@@ -1,0 +1,27 @@
+/* Self-host шрифтов (DECISIONS §4, self-host — без запросов к Google).
+ *
+ * Как включить:
+ * 1. Скачай .woff2: Cormorant / Playfair Display (serif-заголовки),
+ *    Inter / Manrope (текст), рукописный акцент — на 1–2 элемента.
+ * 2. Положи файлы рядом с этим файлом (src/shared/fonts/).
+ * 3. Раскомментируй нужные @font-face ниже.
+ *
+ * Пока файлов нет — используются системные фолбэки из tailwind.config.ts,
+ * чтобы сборка не падала.
+ */
+
+/*
+@font-face {
+  font-family: "Cormorant";
+  src: url("./Cormorant-Variable.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./Inter-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+*/
