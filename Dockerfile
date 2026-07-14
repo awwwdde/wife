@@ -44,7 +44,8 @@ ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     ENV=production \
     STATIC_DIR=/app/static \
-    UPLOADS_DIR=/app/uploads
+    UPLOADS_DIR=/app/uploads \
+    RUN_REMINDER_WORKER=true
 
 # Бэкенд-код + установка зависимостей (editable — import app из /app).
 COPY backend/ ./

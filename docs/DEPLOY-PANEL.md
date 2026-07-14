@@ -24,10 +24,21 @@ FastAPI-бэкендом, что и `/api`. Один процесс, один п
 |---|---|---|
 | `DATABASE_URL` | **да** | Строка подключения к **PostgreSQL**. Принимаются `postgres://`, `postgresql://`, `postgresql+psycopg2://`, `postgresql+asyncpg://` — всё приводится к asyncpg. **SQLite не поддерживается** (нужны EXCLUDE-констрейнт, `btree_gist`, `ARRAY`, native enum). |
 | `JWT_SECRET` | **да** | Секрет для подписи cookie-сессий клиентов. Длинная случайная строка. |
-| `BOT_TOKEN` | да (для входа) | Токен Telegram-бота — нужен для валидации `initData` (Mini App) и Login Widget. |
+| `BOT_TOKEN` | да | Токен Telegram-бота — вход (`initData`/Login Widget) **и** бот (webhook, уведомления). |
+| `PUBLIC_SITE_URL` | да (для бота) | `https://<поддомен>` — из него строятся webhook и кнопка Mini App. Без https бот-часть не активируется. |
+| `TELEGRAM_WEBHOOK_SECRET` | рекоменд. | Секрет валидации webhook. Задать случайную строку. |
 | `CANCELLATION_HOURS` | нет | Порог отмены/переноса, по умолчанию `6`. |
 | `CORS_ORIGINS` | нет | Не требуется: фронт и API — один origin (один контейнер). |
-| `TELEGRAM_WEBHOOK_SECRET` | нет | Понадобится в Фазе 3 (webhook бота). |
+
+`RUN_REMINDER_WORKER=true` уже зашит в образ — воркер напоминаний крутится фоновой
+задачей внутри веб-процесса. **Не масштабируй под-сайт в несколько реплик** без
+доработки (иначе дубли webhook/уведомлений).
+
+### Бот (Фаза 3)
+На старте контейнера (если задан `BOT_TOKEN` и `PUBLIC_SITE_URL` на https) приложение
+само: ставит **menu-кнопку бота на Mini App** (замена DIKIDI) и **webhook**
+на `<PUBLIC_SITE_URL>/api/bot/webhook`. Проверка: напиши боту `/start` — придёт
+приветствие с кнопками «Записаться» и «Поделиться номером».
 
 Уже зашиты в образ и менять не нужно: `ENV=production`, `STATIC_DIR=/app/static`,
 `UPLOADS_DIR=/app/uploads`.

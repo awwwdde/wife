@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     # Бизнес-правила
     CANCELLATION_HOURS: int = 6
 
+    # Запускать воркер напоминаний внутри веб-процесса (single-container режим панели).
+    # В docker-compose воркер — отдельный сервис, поэтому здесь по умолчанию False.
+    RUN_REMINDER_WORKER: bool = False
+
     # S3
     S3_ENDPOINT: str = ""
     S3_BUCKET: str = ""

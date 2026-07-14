@@ -48,7 +48,7 @@ export function Contacts() {
 export function Footer() {
   return (
     <footer className="px-6 md:px-16 py-10 text-sm opacity-50">
-      © {new Date().getFullYear()} askbrows · Москва
+      © {new Date().getFullYear()} askbrows
     </footer>
   );
 }

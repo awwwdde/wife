@@ -6,6 +6,9 @@
   из STATIC_DIR, а также /uploads. Порт 8080, healthcheck /healthz (контракт панели).
 """
 
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, status
@@ -13,15 +16,44 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.bot.webhook import router as bot_webhook_router
 from app.core.config import settings
 from app.modules.auth.router import router as auth_router
 from app.modules.booking.router import router as booking_router
 from app.modules.service.router import router as services_router
 
+log = logging.getLogger("askbrows")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Настройка бота (menu button + webhook) и фоновый воркер напоминаний —
+    # в single-container режиме панели всё живёт внутри веб-процесса.
+    worker_task: asyncio.Task | None = None
+    if settings.BOT_TOKEN:
+        try:
+            from app.bot.setup import setup_bot
+
+            await setup_bot()
+        except Exception:
+            log.exception("Ошибка настройки бота (продолжаем без него)")
+    if settings.RUN_REMINDER_WORKER:
+        from app.workers.reminder_worker import run_loop
+
+        worker_task = asyncio.create_task(run_loop())
+        log.info("Reminder worker запущен фоновой задачей")
+    try:
+        yield
+    finally:
+        if worker_task is not None:
+            worker_task.cancel()
+
+
 app = FastAPI(
     title="askbrows API",
     version="0.1.0",
     description="Сайт-визитка + онлайн-запись + CRM + Telegram-бот для мастера-бровиста.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -48,6 +80,7 @@ async def health() -> dict[str, str]:
 app.include_router(services_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(booking_router, prefix="/api")
+app.include_router(bot_webhook_router, prefix="/api")
 
 
 # --- Раздача загрузок (медиа) ---

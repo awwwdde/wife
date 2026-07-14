@@ -8,6 +8,7 @@
 |---|---|---|
 | GET | `/healthz` | Healthcheck панели (200 когда готово). |
 | GET | `/api/health` | Статус + текущее окружение. |
+| POST | `/api/bot/webhook` | Приём Telegram-обновлений (webhook бота; проверка `X-Telegram-Bot-Api-Secret-Token`). |
 
 ## Услуги
 | Метод | Путь | Назначение |

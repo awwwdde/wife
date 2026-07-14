@@ -11,7 +11,7 @@ export function Hero() {
         transition={{ duration: 0.6 }}
         className="font-script text-terracotta text-2xl mb-4"
       >
-        Ангелина · Москва
+        Ангелина 
       </motion.p>
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
@@ -20,7 +20,7 @@ export function Hero() {
         className="font-serif text-5xl md:text-7xl leading-tight max-w-3xl"
       >
         ASKBROWS
-        <span className="block italic text-terracotta">брови · ресницы</span>
+        <span className="block italic text-terracotta">бровки и реснички</span>
       </motion.h1>
       <motion.div
         initial={{ opacity: 0 }}

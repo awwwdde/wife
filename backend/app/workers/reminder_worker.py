@@ -1,9 +1,9 @@
-"""Воркер напоминаний: раз в минуту сканирует Reminder и отправляет готовые.
+"""Воркер напоминаний: раз в минуту сканирует Reminder и рассылает через бота.
 
 Модель из DECISIONS §2 — НЕ per-job APScheduler, а таблица + периодический скан:
     status='scheduled' AND send_at <= now()
-Идемпотентность через sent_at. Фаза 1 — только скелет цикла; реальная отправка
-через бота и ретраи — фаза 3.
+Идемпотентность через sent_at/status. На панели воркер запускается фоновой
+задачей внутри веб-процесса (RUN_REMINDER_WORKER=true); в docker-compose — отдельный сервис.
 """
 
 import asyncio
@@ -12,8 +12,10 @@ from datetime import UTC, datetime
 
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.database.session import async_session_maker
-from app.models.enums import ReminderStatus
+from app.models.appointment import Appointment
+from app.models.enums import AppointmentStatus, ReminderStatus
 from app.models.reminder import Reminder
 
 logging.basicConfig(level=logging.INFO)
@@ -21,10 +23,19 @@ log = logging.getLogger("askbrows.worker")
 
 SCAN_INTERVAL_SEC = 60
 
+# Записи, для которых уведомления слать не нужно.
+_SKIP_STATUSES = (AppointmentStatus.cancelled, AppointmentStatus.no_show)
+
 
 async def process_due_reminders() -> int:
-    """Найти напоминания к отправке. Пока только логируем (фаза 3 подключит бота)."""
+    """Отправить готовые напоминания. Возвращает число отправленных."""
+    if not settings.BOT_TOKEN:
+        return 0  # без токена слать нечем (скелет/локалка)
+
+    from app.bot import notifications
+
     now = datetime.now(UTC)
+    sent = 0
     async with async_session_maker() as session:
         result = await session.execute(
             select(Reminder).where(
@@ -34,23 +45,36 @@ async def process_due_reminders() -> int:
         )
         due = list(result.scalars().all())
         for reminder in due:
-            # TODO(фаза 3): отправить через бота, при успехе — sent_at/status=sent,
-            #               при ошибке — ретрай/failed. Пока только фиксируем находку.
-            log.info("Напоминание #%s (%s) готово к отправке", reminder.id, reminder.type)
-        return len(due)
+            appt = await session.get(Appointment, reminder.appointment_id)
+            try:
+                if appt is None or appt.status in _SKIP_STATUSES:
+                    reminder.status = ReminderStatus.failed  # неактуально
+                    continue
+                ok = await notifications.send_reminder(session, appt, reminder.type)
+                if ok:
+                    reminder.status = ReminderStatus.sent
+                    reminder.sent_at = datetime.now(UTC)
+                    sent += 1
+                else:
+                    reminder.status = ReminderStatus.failed
+            except Exception:
+                log.exception("Не удалось отправить напоминание #%s", reminder.id)
+                reminder.status = ReminderStatus.failed
+        await session.commit()
+    return sent
 
 
-async def main() -> None:
+async def run_loop() -> None:
     log.info("Reminder worker запущен (скан раз в %s c).", SCAN_INTERVAL_SEC)
     while True:
         try:
             count = await process_due_reminders()
             if count:
-                log.info("Обработано напоминаний: %s", count)
-        except Exception:  # noqa: BLE001 — воркер не должен падать из-за одной итерации
+                log.info("Отправлено напоминаний: %s", count)
+        except Exception:
             log.exception("Ошибка в цикле воркера")
         await asyncio.sleep(SCAN_INTERVAL_SEC)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_loop())

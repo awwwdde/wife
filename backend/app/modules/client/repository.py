@@ -13,6 +13,11 @@ async def get_by_id(session: AsyncSession, client_id: int) -> Client | None:
     return await session.get(Client, client_id)
 
 
+async def get_by_telegram_id(session: AsyncSession, telegram_id: int) -> Client | None:
+    result = await session.execute(select(Client).where(Client.telegram_id == telegram_id))
+    return result.scalar_one_or_none()
+
+
 async def get_or_create_by_telegram(session: AsyncSession, tg: TelegramUser) -> Client:
     result = await session.execute(select(Client).where(Client.telegram_id == tg.id))
     client = result.scalar_one_or_none()
